@@ -14,6 +14,7 @@ import { cn, Loading, Page, PageHeader } from './ui'
 import { castVote, syncWeekVotesForUser } from './votes'
 import { computeLifetimeStats } from './stats'
 import { buildTrending } from './trending'
+import { SpeedInsights } from '@vercel/speed-insights/react'
 
 // ── Region auto-detect (IP-based, no permission prompt) ──────────
 const REGION_KEY = 'locked_region'
@@ -378,6 +379,7 @@ useEffect(() => {
           {page === 'profile' && <Profile />}
         </div>
       </div>
+      <SpeedInsights />
     </div>
   )
 }
