@@ -547,6 +547,7 @@ function Leaderboard({ setPage }) {
                   <div className="lb-region">{entry.region}</div>
                   {!isCompeting && <div className="lb-tag lb-tag--lock">🔒 Rate {LEADERBOARD_MIN_RATINGS_GIVEN} PFPs to compete</div>}
                   {isCompeting && competeRank > 0 && <div className="lb-tag lb-tag--live">✓ Competing · #{competeRank}</div>}
+                  {isCompeting && competeRank > 0 && <div className="lb-tag lb-tag--live">✓ Competing · #{competeRank}</div>}
                 </div>
                 <div className="lb-stats">
                   <div className="lb-score">{entry.score}</div>
