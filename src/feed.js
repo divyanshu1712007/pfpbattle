@@ -40,21 +40,22 @@ export const loadWeekFeedEntries = async (week, year) => {
   ])
   if (entriesError) return { entries: [], error: entriesError }
 
-  // ── Fallback to last week if current week has no entries ──
-  if (!entriesData || entriesData.length === 0) {
-    const lastWeek = week - 1 === 0 ? 52 : week - 1
-    const lastYear = week - 1 === 0 ? year - 1 : year
-    const [{ data: lastEntries }, { data: lastVotes }] = await Promise.all([
-      supabase.from('entries').select('*').eq('week_number', lastWeek).eq('year', lastYear),
-      supabase.from('votes').select('anon_id').eq('week_number', lastWeek),
-    ])
+  const lastWeek = week - 1 === 0 ? 52 : week - 1
+  const lastYear = week - 1 === 0 ? year - 1 : year
+
+  // Always pad with last week's entries if current week has fewer than 10
+  let allEntries = entriesData || []
+  if (allEntries.length < 10) {
+    const { data: lastEntries } = await supabase
+      .from('entries').select('*').eq('week_number', lastWeek).eq('year', lastYear)
     if (lastEntries?.length) {
-      const raterCounts = buildRaterActivityCounts(lastVotes)
-      return { entries: sortEntriesByExposure(lastEntries, raterCounts), raterCounts, isFallback: true }
+      // Avoid duplicates by username
+      const existingNames = new Set(allEntries.map(e => e.username))
+      const padEntries = lastEntries.filter(e => !existingNames.has(e.username))
+      allEntries = [...allEntries, ...padEntries]
     }
-    return { entries: [], error: null }
   }
 
   const raterCounts = buildRaterActivityCounts(votesData)
-  return { entries: sortEntriesByExposure(entriesData, raterCounts), raterCounts }
+  return { entries: sortEntriesByExposure(allEntries, raterCounts), raterCounts }
 }
