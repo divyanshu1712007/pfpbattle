@@ -748,6 +748,11 @@ function Upload() {
 
   const fetchInstagramPFP = async () => {
     if (!igUrl) return
+    const isValid = igUrl.includes('instagram.com/') || /^[a-zA-Z0-9._]{1,30}$/.test(igUrl.trim())
+    if (!isValid) {
+      setMessage('⚠️ Please enter a valid Instagram URL or username')
+      return
+    }
     setIgLoading(true)
     const match = igUrl.trim().match(/instagram\.com\/([a-zA-Z0-9._]+)/)
     const handle = match ? match[1] : igUrl.trim().replace('@', '')
@@ -833,7 +838,13 @@ function Upload() {
       </div>
       {preview && (
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <img src={preview} alt="" className="avatar" style={{ width: 100, height: 100, margin: '0 auto', borderColor: 'var(--accent)' }} />
+          {uploadType === 'instagram' ? (
+            <div style={{ width: 100, height: 100, margin: '0 auto', borderRadius: '50%', background: 'var(--bg-card)', border: '2px solid var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem' }}>
+              📸
+            </div>
+          ) : (
+            <img src={preview} alt="" className="avatar" style={{ width: 100, height: 100, margin: '0 auto', borderColor: 'var(--accent)' }} />
+          )}
           <p className="text-success" style={{ fontSize: '0.8rem', marginTop: 8 }}>✅ PFP ready</p>
         </div>
       )}
