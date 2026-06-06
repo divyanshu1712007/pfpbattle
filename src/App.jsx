@@ -547,7 +547,7 @@ function Leaderboard({ setPage }) {
                   <div className="lb-region">{entry.region}</div>
                      {!isCompeting && <div className="lb-tag lb-tag--lock">🔒 Rate {LEADERBOARD_MIN_RATINGS_GIVEN} PFPs to compete</div>}
                      {isCompeting && competeRank > 0 && <div className="lb-tag lb-tag--live">✓ Competing · #{competeRank}</div>}
-                     {isCompeting && competeRank > 0 && <div className="lb-tag" style={{ color: '#f59e0b', fontSize: '0.7rem' }}>⚡ Rate more to appear higher in feeds</div>}
+                     {isCompeting && competeRank > 0 && entry.anon_id === myAnonId && <div className="lb-tag" style={{ color: '#f59e0b', fontSize: '0.7rem' }}>⚡ Rate more to appear higher in feeds</div>}
                   <div className="lb-score">{entry.score}</div>
                   <div className="lb-meta">⭐ {entry.avgRating} · {entry.totalVotes} votes</div>
                   <div className="lb-meta">👁️ {entry.view_count || 0}</div>
@@ -1205,6 +1205,35 @@ function Profile() {
         </div>
         <span className="text-muted" style={{ fontSize: '0.75rem' }}>{Math.min(votesGiven, VOTES_REQUIRED_TO_SHARE)}/{VOTES_REQUIRED_TO_SHARE}</span>
       </div>
+      {(() => {
+  const BOOST_TIERS = [
+    { min: 0,   max: 4,   label: 'Minimal', color: '#6b7280', pct: 10  },
+    { min: 5,   max: 14,  label: 'Low',     color: '#f59e0b', pct: 30  },
+    { min: 15,  max: 29,  label: 'Growing', color: '#f472b6', pct: 55  },
+    { min: 30,  max: 74,  label: 'Strong',  color: '#67e8f9', pct: 75  },
+    { min: 75,  max: 149, label: 'High',    color: '#a78bfa', pct: 90  },
+    { min: 150, max: Infinity, label: 'Max',color: '#22c55e', pct: 100 },
+  ]
+  const tier = BOOST_TIERS.find(t => totalVotesGiven >= t.min && totalVotesGiven <= t.max) || BOOST_TIERS[0]
+  const nextTier = BOOST_TIERS[BOOST_TIERS.indexOf(tier) + 1]
+  const isMax = !nextTier
+  return (
+    <div className="card card--pad" style={{ marginBottom: 20, border: `1px solid ${tier.color}44`, background: `${tier.color}0d` }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+        <p className="field-label mb-0">⚡ Feed Boost Meter</p>
+        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: tier.color, border: `1px solid ${tier.color}44`, borderRadius: 6, padding: '2px 8px' }}>
+          {tier.label}
+        </span>
+      </div>
+      <div className="progress-track" style={{ height: 10, marginBottom: 8 }}>
+        <div className="progress-fill" style={{ width: `${tier.pct}%`, background: `linear-gradient(90deg, ${tier.color}88, ${tier.color})`, borderRadius: 999 }} />
+      </div>
+      <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-dim)' }}>
+        {isMax ? '🚀 Your PFP is getting maximum feed exposure!' : `Rate more to boost visibility · ${nextTier.min - totalVotesGiven} more ratings to reach ${nextTier.label}`}
+      </p>
+    </div>
+  )
+})()}
 
       <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
         <input className="input" style={{ flex: 1 }} value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Enter username" onKeyDown={(e) => e.key === 'Enter' && search()} />
