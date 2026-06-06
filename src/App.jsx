@@ -750,13 +750,14 @@ function Upload() {
   }
 
   const fetchInstagramPFP = async () => {
-    if (!igUsername) return
-    setIgLoading(true)
-    const url = `https://unavatar.io/instagram/${igUsername}`
-    setPreview(url)
-    setIgLoading(false)
-    setMessage('✅ Instagram PFP loaded! Click Submit to enter.')
-  }
+  if (!igUsername) return
+  setIgLoading(true)
+  const url = `https://unavatar.io/instagram/${igUsername.trim()}`
+  setPreview(url)
+  setImage(null)
+  setIgLoading(false)
+  setMessage('✅ Instagram PFP loaded! Click Submit to enter.')
+}
 
   const handleUpload = async () => {
     if (!canShare()) {
