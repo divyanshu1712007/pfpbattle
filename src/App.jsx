@@ -545,11 +545,9 @@ function Leaderboard({ setPage }) {
                     )}
                   </div>
                   <div className="lb-region">{entry.region}</div>
-                  {!isCompeting && <div className="lb-tag lb-tag--lock">🔒 Rate {LEADERBOARD_MIN_RATINGS_GIVEN} PFPs to compete</div>}
-                  {isCompeting && competeRank > 0 && <div className="lb-tag lb-tag--live">✓ Competing · #{competeRank}</div>}
-                  {isCompeting && competeRank > 0 && <div className="lb-tag lb-tag--live">✓ Competing · #{competeRank}</div>}
-                </div>
-                <div className="lb-stats">
+                     {!isCompeting && <div className="lb-tag lb-tag--lock">🔒 Rate {LEADERBOARD_MIN_RATINGS_GIVEN} PFPs to compete</div>}
+                     {isCompeting && competeRank > 0 && <div className="lb-tag lb-tag--live">✓ Competing · #{competeRank}</div>}
+                     {isCompeting && competeRank > 0 && <div className="lb-tag" style={{ color: '#f59e0b', fontSize: '0.7rem' }}>⚡ Rate more to appear higher in feeds</div>}
                   <div className="lb-score">{entry.score}</div>
                   <div className="lb-meta">⭐ {entry.avgRating} · {entry.totalVotes} votes</div>
                   <div className="lb-meta">👁️ {entry.view_count || 0}</div>
