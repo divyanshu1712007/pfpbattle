@@ -279,17 +279,31 @@ function Comments({ entryId }) {
     </div>
   )
 }
-
+function SubmitToast({ onClose }) {
+  useEffect(() => { const t = setTimeout(onClose, 3000); return () => clearTimeout(t) }, [])
+  return (
+    <div className="toast" style={{ background: '#0d2a1a', border: '2px solid #22c55e', boxShadow: '0 12px 48px #22c55e44' }}>
+      <div style={{ fontSize: '2rem', marginBottom: 6 }}>🎉</div>
+      <div style={{ fontWeight: 700, color: '#22c55e' }}>Entry Submitted!</div>
+      <div className="text-muted" style={{ marginTop: 4, fontSize: '0.85rem' }}>You are in this week's competition!</div>
+    </div>
+  )
+}
 function App() {
   const [page, setPage] = useState('home')
   const [levelUpBadge, setLevelUpBadge] = useState(null)
+  const [showSubmitToast, setShowSubmitToast] = useState(false)
 
   useEffect(() => {
     const handler = (e) => setLevelUpBadge(e.detail)
     window.addEventListener('pfp_levelup', handler)
     return () => window.removeEventListener('pfp_levelup', handler)
   }, [])
-
+useEffect(() => {
+  const handler = () => setShowSubmitToast(true)
+  window.addEventListener('entry_submitted', handler)
+  return () => window.removeEventListener('entry_submitted', handler)
+}, [])
   useEffect(() => {
     const boot = async () => {
       getAnonId()
@@ -339,6 +353,7 @@ function App() {
     <div className="app-shell">
       <div className="app-inner">
         {levelUpBadge && <LevelUpToast badge={levelUpBadge} onClose={() => setLevelUpBadge(null)} />}
+        {showSubmitToast && <SubmitToast onClose={() => setShowSubmitToast(false)} />}
         <header className="header">
           <h1 className="header-brand">⚔️ PFPBattle</h1>
           <nav className="nav">
@@ -821,6 +836,8 @@ function Upload() {
 
       await ensureAnonymousUser(getTotalVotesGiven(), finalRegion)
       setMessage('✅ You are in this week\'s competition!')
+      window.dispatchEvent(new CustomEvent('entry_submitted'))
+
       setUsername(''); setImage(null); setPreview(null); setIgUrl('')
     } catch (err) { setMessage('❌ ' + err.message) }
     setLoading(false)
