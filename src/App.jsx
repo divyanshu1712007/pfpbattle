@@ -731,16 +731,13 @@ function Upload() {
   const [uploadType, setUploadType] = useState('file')
   const [image, setImage] = useState(null)
   const [preview, setPreview] = useState(null)
-  const [igUsername, setIgUsername] = useState('')
+  const [igUrl, setIgUrl] = useState('')
   const [igLoading, setIgLoading] = useState(false)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
 
-  // Auto-detect region on mount if not already cached
   useEffect(() => {
-    if (!region) {
-      detectRegion().then(setRegion)
-    }
+    if (!region) detectRegion().then(setRegion)
   }, [])
 
   const handleImageChange = (e) => {
@@ -750,14 +747,15 @@ function Upload() {
   }
 
   const fetchInstagramPFP = async () => {
-  if (!igUsername) return
-  setIgLoading(true)
-  const url = `https://unavatar.io/instagram/${igUsername.trim()}`
-  setPreview(url)
-  setImage(null)
-  setIgLoading(false)
-  setMessage('✅ Instagram PFP loaded! Click Submit to enter.')
-}
+    if (!igUrl) return
+    setIgLoading(true)
+    const match = igUrl.trim().match(/instagram\.com\/([a-zA-Z0-9._]+)/)
+    const handle = match ? match[1] : igUrl.trim().replace('@', '')
+    const url = `https://unavatar.io/instagram/${handle}`
+    setPreview(url)
+    setIgLoading(false)
+    setMessage('✅ Instagram PFP loaded! Click Submit to enter.')
+  }
 
   const handleUpload = async () => {
     if (!canShare()) {
@@ -766,7 +764,6 @@ function Upload() {
     }
     if (!username.trim()) { setMessage('Please enter a display name'); return }
 
-    // Duplicate check — also enforced by UNIQUE constraint on DB
     const week = getWeekNumber()
     const year = new Date().getFullYear()
     const { data: existing } = await supabase
@@ -777,7 +774,6 @@ function Upload() {
       .eq('year', year)
     if (existing && existing.length > 0) {
       setMessage('⚠️ You already entered this week!')
-      setLoading(false)
       return
     }
 
@@ -789,7 +785,9 @@ function Upload() {
       let pfpUrl = ''
 
       if (uploadType === 'instagram') {
-        pfpUrl = `https://unavatar.io/instagram/${igUsername}`
+        const match = igUrl.trim().match(/instagram\.com\/([a-zA-Z0-9._]+)/)
+        const handle = match ? match[1] : igUrl.trim().replace('@', '')
+        pfpUrl = `https://unavatar.io/instagram/${handle}`
       } else {
         const fileExt = image.name.split('.').pop()
         const fileName = `${Date.now()}.${fileExt}`
@@ -799,7 +797,6 @@ function Upload() {
         pfpUrl = urlData.publicUrl
       }
 
-      // Use server-locked region — falls back to detected region
       const { data: userRow } = await supabase
         .from('anonymous_users')
         .select('locked_region')
@@ -819,7 +816,7 @@ function Upload() {
 
       await ensureAnonymousUser(getTotalVotesGiven(), finalRegion)
       setMessage('✅ You are in this week\'s competition!')
-      setUsername(''); setImage(null); setPreview(null); setIgUsername('')
+      setUsername(''); setImage(null); setPreview(null); setIgUrl('')
     } catch (err) { setMessage('❌ ' + err.message) }
     setLoading(false)
   }
@@ -831,8 +828,8 @@ function Upload() {
         Enter leaderboard after you rate {LEADERBOARD_MIN_RATINGS_GIVEN} PFPs ({Math.min(getTotalVotesGiven(), LEADERBOARD_MIN_RATINGS_GIVEN)}/{LEADERBOARD_MIN_RATINGS_GIVEN}).
       </p>
       <div className="toggle-row">
-        <button type="button" className={cn('toggle-btn', uploadType === 'file' && 'toggle-btn--active')} onClick={() => { setUploadType('file'); setPreview(null) }}>📁 Upload</button>
-        <button type="button" className={cn('toggle-btn', uploadType === 'instagram' && 'toggle-btn--active')} onClick={() => { setUploadType('instagram'); setPreview(null) }}>📸 Instagram</button>
+        <button type="button" className={cn('toggle-btn', uploadType === 'file' && 'toggle-btn--active')} onClick={() => { setUploadType('file'); setPreview(null); setMessage('') }}>📁 Upload</button>
+        <button type="button" className={cn('toggle-btn', uploadType === 'instagram' && 'toggle-btn--active')} onClick={() => { setUploadType('instagram'); setPreview(null); setMessage('') }}>📸 Instagram</button>
       </div>
       {preview && (
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
@@ -843,12 +840,20 @@ function Upload() {
       <div className="form-stack card card--pad">
         {uploadType === 'instagram' && (
           <div>
-            <p className="field-label">Instagram Username</p>
+            <p className="field-label">Instagram Profile URL</p>
             <div style={{ display: 'flex', gap: 8 }}>
-              <input className="input" style={{ flex: 1 }} value={igUsername} onChange={(e) => setIgUsername(e.target.value.replace('@', ''))} placeholder="e.g. cristiano" />
-              <button type="button" className="btn btn-primary" onClick={fetchInstagramPFP} disabled={igLoading}>{igLoading ? '…' : 'Fetch'}</button>
+              <input
+                className="input"
+                style={{ flex: 1 }}
+                value={igUrl}
+                onChange={(e) => setIgUrl(e.target.value)}
+                placeholder="https://www.instagram.com/cristiano"
+              />
+              <button type="button" className="btn btn-primary" onClick={fetchInstagramPFP} disabled={igLoading}>
+                {igLoading ? '…' : 'Fetch'}
+              </button>
             </div>
-            <p className="progress-hint" style={{ marginTop: 6 }}>We fetch your public profile picture</p>
+            <p className="progress-hint" style={{ marginTop: 6 }}>Paste your Instagram profile link</p>
           </div>
         )}
         {uploadType === 'file' && (
@@ -864,9 +869,7 @@ function Upload() {
         <div>
           <p className="field-label">Region 🔒</p>
           {region
-            ? <p className="alert alert--purple" style={{ margin: 0 }}>
-                Auto-detected: <strong>{region}</strong>
-              </p>
+            ? <p className="alert alert--purple" style={{ margin: 0 }}>Auto-detected: <strong>{region}</strong></p>
             : <p className="text-muted" style={{ fontSize: '0.85rem' }}>Detecting your location…</p>
           }
         </div>
