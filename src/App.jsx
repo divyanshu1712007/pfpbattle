@@ -1,3 +1,28 @@
+// ── Global CSS injection ─────────────────────────────────────────
+;(function() {
+  const s = document.createElement('style')
+  s.textContent = `
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
+    body { font-family: 'DM Sans', system-ui, sans-serif !important; }
+    @media (max-width: 768px) {
+      .mobile-bottom-nav { display: flex !important; }
+      .main-content { margin-left: 0 !important; padding-bottom: 72px !important; }
+    }
+    .page-title, .lb-score, .stat-value, .header-brand {
+      font-family: 'Syne', system-ui, sans-serif !important;
+    }
+    .lb-row { transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease !important; }
+    .lb-row:hover:not(.lb-row--locked) { transform: translateX(5px) !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important; }
+    .rate-num { transition: all 0.18s cubic-bezier(0.34,1.56,0.64,1) !important; }
+    .rate-num:hover { background: rgba(124,58,237,0.2) !important; border-color: #7c3aed !important; color: #a78bfa !important; transform: translateY(-3px) !important; box-shadow: 0 6px 16px rgba(124,58,237,0.3) !important; }
+    .btn-primary:hover:not(:disabled) { box-shadow: 0 8px 32px rgba(124,58,237,0.5) !important; transform: translateY(-1px) !important; }
+    .champ-chip:hover { transform: translateY(-4px) !important; }
+    .stat-card { transition: transform 0.2s, border-color 0.2s !important; }
+    .stat-card:hover { transform: translateY(-2px) !important; border-color: rgba(255,255,255,0.14) !important; }
+  `
+  document.head.appendChild(s)
+})()
+
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from './supabase'
 import html2canvas from 'html2canvas'
@@ -16,18 +41,53 @@ import { computeLifetimeStats } from './stats'
 import { buildTrending } from './trending'
 
 
-// ── Responsive sidebar CSS ───────────────────────────────────────
-const _style = document.createElement('style')
-_style.textContent = `
+// ── Responsive CSS + design tokens ──────────────────────────
+const _appStyle = document.createElement('style')
+_appStyle.textContent = `
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap');
+  :root {
+    --sidebar-w: 220px;
+    --accent: #7c3aed;
+    --accent2: #9333ea;
+    --accent-bright: #a78bfa;
+    --accent-glow: rgba(124,58,237,0.28);
+    --gold: #f59e0b;
+    --gold-bright: #fbbf24;
+    --success: #10b981;
+    --danger: #ef4444;
+    --bg: #060610;
+    --bg-card: rgba(16,16,30,0.75);
+    --border: rgba(255,255,255,0.08);
+    --border-strong: rgba(255,255,255,0.14);
+    --text: #eeeef5;
+    --text-muted: #8888a0;
+    --text-dim: #4a4a62;
+    --radius: 16px;
+    --radius-sm: 12px;
+    --ease: cubic-bezier(0.22,1,0.36,1);
+    --ease-spring: cubic-bezier(0.34,1.56,0.64,1);
+    --font-display: 'Syne', system-ui, sans-serif;
+  }
+  body { background: var(--bg); font-family: 'DM Sans', system-ui, sans-serif; }
+  .page-title { font-family: var(--font-display) !important; }
+  .lb-score, .stat-value { font-family: var(--font-display) !important; }
+  .sidebar-nav button:hover { background: rgba(124,58,237,0.12) !important; color: #fff !important; }
+  .nav-item-active { background: linear-gradient(135deg,#7c3aed,#6d28d9) !important; color:#fff !important; box-shadow: 0 4px 20px rgba(124,58,237,0.35) !important; }
+  .lb-row { transition: transform 0.22s var(--ease), border-color 0.22s, box-shadow 0.22s !important; }
+  .lb-row:hover { transform: translateX(5px) !important; border-color: rgba(255,255,255,0.14) !important; }
+  .rate-num:hover { background: rgba(124,58,237,0.2) !important; border-color: #7c3aed !important; color: #a78bfa !important; transform: translateY(-3px) !important; box-shadow: 0 6px 16px rgba(124,58,237,0.3) !important; }
+  .btn-primary:hover { box-shadow: 0 8px 32px rgba(124,58,237,0.5) !important; transform: translateY(-1px) !important; }
+  .btn-ghost:hover { background: rgba(255,255,255,0.07) !important; border-color: rgba(255,255,255,0.14) !important; color: #eeeef5 !important; }
+  .champ-chip:hover { transform: translateY(-4px) !important; border-color: rgba(245,158,11,0.3) !important; box-shadow: 0 8px 24px rgba(245,158,11,0.15) !important; }
   @media (max-width: 768px) {
     .sidebar-nav { display: none !important; }
     .mobile-bottom-nav { display: flex !important; }
-    .main-content { margin-left: 0 !important; padding-bottom: 70px; }
+    .main-content { margin-left: 0 !important; padding-bottom: 72px !important; }
   }
 `
-document.head.appendChild(_style)
+document.head.appendChild(_appStyle)
 
-// ── Region auto-detect (IP-based, no permission prompt) ──────────
+// ── Region auto-detect ─────────────────────────────────────── (IP-based, no permission prompt) ──────────
 const REGION_KEY = 'locked_region'
 
 export const detectRegion = async () => {
@@ -151,7 +211,7 @@ const trackView = async (entry) => {
   await supabase.rpc('increment_views', { entry_id: entry.id })
 }
 
-// ── Streak & Badge Bar (sidebar compact version) ────────────────
+// ── Streak & Badge Bar (sidebar compact) ────────────────────────
 function StreakBadgeBar() {
   const total = getTotalVotesGiven()
   const streak = getStreak()
@@ -161,29 +221,29 @@ function StreakBadgeBar() {
   const progress = next ? ((total - badge.minVotes) / (next.minVotes - badge.minVotes)) * 100 : 100
 
   return (
-    <div style={{ borderTop: '1px solid var(--border, #222)', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-      {/* Streak */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingLeft: 8 }}>
-        <span style={{ fontSize: '1rem' }}>{alive ? '🔥' : '💤'}</span>
-        <span style={{ fontSize: '0.78rem', color: alive ? '#fb923c' : 'var(--text-dim, #888)', fontWeight: 600 }}>
-          {streak} day streak
-        </span>
+    <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 10, background: alive ? 'rgba(251,146,60,0.08)' : 'rgba(255,255,255,0.03)', border: `1px solid ${alive ? 'rgba(251,146,60,0.2)' : 'rgba(255,255,255,0.06)'}` }}>
+        <span style={{ fontSize: '1.1rem' }}>{alive ? '🔥' : '💤'}</span>
+        <div>
+          <div style={{ fontSize: '0.8rem', fontWeight: 700, color: alive ? '#fb923c' : 'rgba(74,74,98,0.9)' }}>{streak} day streak</div>
+          {!alive && <div style={{ fontSize: '0.65rem', color: 'rgba(74,74,98,0.7)' }}>rate today!</div>}
+        </div>
       </div>
-      {/* Badge */}
-      <div style={{ paddingLeft: 8 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+      <div style={{ padding: '8px 10px', borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
           <span style={{ fontSize: '1rem' }}>{badge.emoji}</span>
-          <span style={{ fontSize: '0.78rem', color: badge.color, fontWeight: 600 }}>{badge.label} Rater</span>
+          <span style={{ fontSize: '0.78rem', fontWeight: 700, color: badge.color }}>{badge.label}</span>
+          <span style={{ fontSize: '0.65rem', color: 'rgba(74,74,98,0.8)', marginLeft: 'auto' }}>{total}v</span>
         </div>
         {next && (
-          <div>
-            <div style={{ height: 4, borderRadius: 4, background: 'var(--border, #333)', overflow: 'hidden', marginBottom: 3 }}>
-              <div style={{ height: '100%', borderRadius: 4, background: badge.color, width: `${progress}%` }} />
+          <>
+            <div style={{ height: 4, borderRadius: 4, background: 'rgba(255,255,255,0.07)', overflow: 'hidden', marginBottom: 3 }}>
+              <div style={{ height: '100%', borderRadius: 4, background: badge.color, width: `${progress}%`, transition: 'width 0.5s ease' }} />
             </div>
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-dim, #888)' }}>{next.minVotes - total} to {next.label}</span>
-          </div>
+            <div style={{ fontSize: '0.63rem', color: 'rgba(74,74,98,0.8)' }}>{next.minVotes - total} to {next.label}</div>
+          </>
         )}
-        {!next && <span style={{ fontSize: '0.7rem', color: 'var(--accent-bright, #a78bfa)' }}>Max level 👑</span>}
+        {!next && <div style={{ fontSize: '0.65rem', color: '#a78bfa' }}>Max level 👑</div>}
       </div>
     </div>
   )
@@ -197,7 +257,7 @@ function LevelUpToast({ badge, onClose }) {
       <div style={{ fontSize: '2rem', marginBottom: 6 }}>{badge.emoji}</div>
       <div style={{ fontWeight: 700, color: badge.color }}>Level Up!</div>
       <div className="text-muted" style={{ marginTop: 4, fontSize: '0.85rem' }}>
-        You're now a <strong style={{ color: badge.color }}>{badge.label} Rater</strong>
+        You&apos;re now a <strong style={{ color: badge.color }}>{badge.label} Rater</strong>
       </div>
     </div>
   )
@@ -288,16 +348,18 @@ function Comments({ entryId }) {
     </div>
   )
 }
+
 function SubmitToast({ onClose }) {
   useEffect(() => { const t = setTimeout(onClose, 3000); return () => clearTimeout(t) }, [])
   return (
     <div className="toast" style={{ background: '#0d2a1a', border: '2px solid #22c55e', boxShadow: '0 12px 48px #22c55e44' }}>
       <div style={{ fontSize: '2rem', marginBottom: 6 }}>🎉</div>
       <div style={{ fontWeight: 700, color: '#22c55e' }}>Entry Submitted!</div>
-      <div className="text-muted" style={{ marginTop: 4, fontSize: '0.85rem' }}>You are in this week's competition!</div>
+      <div className="text-muted" style={{ marginTop: 4, fontSize: '0.85rem' }}>You are in this week&apos;s competition!</div>
     </div>
   )
 }
+
 function App() {
   const [page, setPage] = useState('home')
   const [levelUpBadge, setLevelUpBadge] = useState(null)
@@ -308,11 +370,13 @@ function App() {
     window.addEventListener('pfp_levelup', handler)
     return () => window.removeEventListener('pfp_levelup', handler)
   }, [])
-useEffect(() => {
-  const handler = () => setShowSubmitToast(true)
-  window.addEventListener('entry_submitted', handler)
-  return () => window.removeEventListener('entry_submitted', handler)
-}, [])
+
+  useEffect(() => {
+    const handler = () => setShowSubmitToast(true)
+    window.addEventListener('entry_submitted', handler)
+    return () => window.removeEventListener('entry_submitted', handler)
+  }, [])
+
   useEffect(() => {
     const boot = async () => {
       getAnonId()
@@ -359,86 +423,74 @@ useEffect(() => {
   }
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
-      {/* Left sidebar nav */}
-      <aside className="sidebar-nav" style={{
-        width: 200,
-        minHeight: '100vh',
-        background: 'var(--bg-card, #111)',
-        borderRight: '1px solid var(--border, #222)',
-        display: 'flex',
-        flexDirection: 'column',
-        padding: '1.25rem 0.75rem',
-        gap: 4,
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        zIndex: 100,
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#060610' }}>
+      {/* ── Sidebar ── */}
+      <aside style={{
+        width: 220, minHeight: '100vh',
+        background: 'rgba(8,8,20,0.97)',
+        backdropFilter: 'blur(24px)',
+        borderRight: '1px solid rgba(255,255,255,0.07)',
+        display: 'flex', flexDirection: 'column',
+        padding: '1.5rem 0.9rem',
+        position: 'fixed', top: 0, left: 0, zIndex: 100,
+        boxShadow: '4px 0 40px rgba(0,0,0,0.5)',
       }}>
-        <div style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--accent-bright, #a78bfa)', marginBottom: '1.25rem', paddingLeft: 8 }}>
-          ⚔️ PFPBattle
-        </div>
-        {NAV.map(([id, icon, label]) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setPage(id)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              padding: '10px 12px',
-              borderRadius: 10,
-              border: 'none',
-              background: page === id ? 'var(--accent, #7c3aed)' : 'transparent',
-              color: page === id ? '#fff' : 'var(--text-dim, #888)',
-              fontWeight: page === id ? 700 : 500,
-              fontSize: '0.95rem',
-              cursor: 'pointer',
-              textAlign: 'left',
-              width: '100%',
-              transition: 'background 0.15s, color 0.15s',
-            }}
-          >
-            <span style={{ fontSize: '1.1rem' }}>{icon}</span>
-            {label}
-          </button>
-        ))}
+        <div style={{
+          fontFamily: "'Syne', system-ui, sans-serif",
+          fontWeight: 800, fontSize: '1.15rem',
+          letterSpacing: '-0.02em',
+          background: 'linear-gradient(135deg,#fff 20%,#a78bfa 100%)',
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+          marginBottom: '2rem', paddingLeft: 10,
+        }}>⚔️ PFPBattle</div>
+        {NAV.map(([id, icon, label]) => {
+          const active = page === id
+          return (
+            <button key={id} type="button" onClick={() => setPage(id)} style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '11px 14px', borderRadius: 12, marginBottom: 3,
+              border: active ? '1px solid rgba(124,58,237,0.4)' : '1px solid transparent',
+              background: active ? 'linear-gradient(135deg,#7c3aed,#6d28d9)' : 'transparent',
+              color: active ? '#fff' : 'rgba(136,136,160,0.85)',
+              fontWeight: active ? 700 : 500, fontSize: '0.9rem',
+              cursor: 'pointer', textAlign: 'left', width: '100%',
+              boxShadow: active ? '0 4px 20px rgba(124,58,237,0.35),inset 0 1px 0 rgba(255,255,255,0.12)' : 'none',
+              transition: 'all 0.2s',
+            }}>
+              <span style={{ fontSize: '1rem' }}>{icon}</span>
+              {label}
+            </button>
+          )
+        })}
         <div style={{ marginTop: 'auto', paddingTop: 16 }}>
           <StreakBadgeBar />
         </div>
       </aside>
 
-      {/* Mobile bottom nav */}
+      {/* ── Mobile bottom nav ── */}
       <nav style={{
-        display: 'none',
-        position: 'fixed',
+        display: 'none', position: 'fixed',
         bottom: 0, left: 0, right: 0,
-        background: 'var(--bg-card, #111)',
-        borderTop: '1px solid var(--border, #222)',
-        zIndex: 200,
-        padding: '6px 0 env(safe-area-inset-bottom, 6px)',
+        background: 'rgba(6,6,16,0.97)',
+        backdropFilter: 'blur(24px)',
+        borderTop: '1px solid rgba(255,255,255,0.08)',
+        zIndex: 200, padding: '6px 0',
       }} className="mobile-bottom-nav">
         {NAV.map(([id, icon, label]) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setPage(id)}
-            style={{
-              flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-              background: 'none', border: 'none', cursor: 'pointer',
-              color: page === id ? 'var(--accent-bright, #a78bfa)' : 'var(--text-dim, #888)',
-              fontSize: '0.6rem', fontWeight: page === id ? 700 : 500, padding: '4px 0',
-            }}
-          >
-            <span style={{ fontSize: '1.3rem' }}>{icon}</span>
+          <button key={id} type="button" onClick={() => setPage(id)} style={{
+            flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+            background: 'none', border: 'none', cursor: 'pointer',
+            color: page === id ? '#a78bfa' : 'rgba(74,74,98,0.9)',
+            fontSize: '0.58rem', fontWeight: page === id ? 700 : 500, padding: '6px 0',
+          }}>
+            <span style={{ fontSize: '1.25rem' }}>{icon}</span>
             {label}
           </button>
         ))}
       </nav>
 
-      {/* Main content */}
-      <div style={{ marginLeft: 200, flex: 1, minWidth: 0 }} className="main-content">
+      {/* ── Main content ── */}
+      <div style={{ marginLeft: 220, flex: 1, minWidth: 0 }} className="main-content">
         {levelUpBadge && <LevelUpToast badge={levelUpBadge} onClose={() => setLevelUpBadge(null)} />}
         {showSubmitToast && <SubmitToast onClose={() => setShowSubmitToast(false)} />}
         <div key={page}>
@@ -531,13 +583,20 @@ function Leaderboard({ setPage }) {
         </div>
       )}
       {champion && (
-        <div className="card card--champion">
-          <div className="champion-label">👑 THIS WEEK&apos;S CHAMPION</div>
-          <img src={champion.pfp_url} alt="" className="avatar avatar--lg avatar--gold" style={{ margin: '0 auto 10px' }} />
-          <div className="lb-name">{champion.username}</div>
-          <div className="lb-region">{champion.region}</div>
-          <div className="text-gold" style={{ fontSize: '1.25rem', fontWeight: 800, marginTop: 8 }}>{champion.score} pts</div>
-          <div className="lb-meta">⭐ {champion.avgRating} · {champion.totalVotes} votes</div>
+        <div style={{
+          textAlign: 'center', padding: '28px 24px', marginBottom: 20,
+          borderRadius: 20, position: 'relative', overflow: 'hidden',
+          background: 'linear-gradient(160deg, rgba(124,58,237,0.18) 0%, rgba(6,6,16,0.95) 60%)',
+          border: '1px solid rgba(245,158,11,0.3)',
+          boxShadow: '0 0 60px rgba(245,158,11,0.1), 0 8px 32px rgba(0,0,0,0.5)',
+        }}>
+          <div style={{ position: 'absolute', top: -60, left: '50%', transform: 'translateX(-50%)', width: 300, height: 200, background: 'radial-gradient(ellipse, rgba(245,158,11,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
+          <div style={{ fontFamily: "'Syne', system-ui, sans-serif", fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.15em', color: '#f59e0b', marginBottom: 14, textTransform: 'uppercase' }}>👑 THIS WEEK&apos;S CHAMPION</div>
+          <img src={champion.pfp_url} alt="" className="avatar avatar--lg avatar--gold" style={{ margin: '0 auto 12px' }} />
+          <div style={{ fontFamily: "'Syne', system-ui, sans-serif", fontWeight: 700, fontSize: '1.1rem', letterSpacing: '-0.02em' }}>{champion.username}</div>
+          <div style={{ fontSize: '0.8rem', color: 'rgba(136,136,160,0.8)', marginTop: 3 }}>{champion.region}</div>
+          <div style={{ fontFamily: "'Syne', system-ui, sans-serif", fontSize: '1.4rem', fontWeight: 800, color: '#fbbf24', marginTop: 10, textShadow: '0 0 24px rgba(251,191,36,0.4)' }}>{champion.score} pts</div>
+          <div style={{ fontSize: '0.78rem', color: 'rgba(136,136,160,0.7)', marginTop: 4 }}>⭐ {champion.avgRating} · {champion.totalVotes} votes</div>
         </div>
       )}
       {!loading && entries.length > 0 && !champion && (
@@ -616,9 +675,9 @@ function Leaderboard({ setPage }) {
                     )}
                   </div>
                   <div className="lb-region">{entry.region}</div>
-                     {!isCompeting && <div className="lb-tag lb-tag--lock">🔒 Rate {LEADERBOARD_MIN_RATINGS_GIVEN} PFPs to compete</div>}
-                     {isCompeting && competeRank > 0 && <div className="lb-tag lb-tag--live">✓ Competing · #{competeRank}</div>}
-                     {isCompeting && competeRank > 0 && entry.anon_id === myAnonId && <div className="lb-tag" style={{ color: '#f59e0b', fontSize: '0.7rem' }}>⚡ Rate more to appear higher in feeds</div>}
+                  {!isCompeting && <div className="lb-tag lb-tag--lock">🔒 Rate {LEADERBOARD_MIN_RATINGS_GIVEN} PFPs to compete</div>}
+                  {isCompeting && competeRank > 0 && <div className="lb-tag lb-tag--live">✓ Competing · #{competeRank}</div>}
+                  {isCompeting && competeRank > 0 && entry.anon_id === myAnonId && <div className="lb-tag" style={{ color: '#f59e0b', fontSize: '0.7rem' }}>⚡ Rate more to appear higher in feeds</div>}
                   <div className="lb-score">{entry.score}</div>
                   <div className="lb-meta">⭐ {entry.avgRating} · {entry.totalVotes} votes</div>
                   <div className="lb-meta">👁️ {entry.view_count || 0}</div>
@@ -715,10 +774,24 @@ function SwipeMode() {
         <img src={entry.pfp_url} alt="" className="avatar avatar--hero" style={{ margin: '0 auto 16px' }} />
         <h3 className="lb-name mb-0">{entry.username}</h3>
         <p className="lb-region">{entry.region}</p>
-        <div className="flex-center" style={{ marginTop: 24 }}>
-          <button type="button" className="btn btn-circle btn-circle--nope" onClick={() => vote(2)}>❌</button>
-          <button type="button" className="btn btn-circle btn-circle--mid" onClick={() => vote(5)}>😐</button>
-          <button type="button" className="btn btn-circle btn-circle--hot" onClick={() => vote(9)}>🔥</button>
+        <div className="flex-center" style={{ marginTop: 28, gap: 20 }}>
+          <button type="button" onClick={() => vote(2)} style={{
+            width: 68, height: 68, borderRadius: '50%', border: '2px solid #ef4444',
+            background: 'rgba(239,68,68,0.1)', color: '#ef4444', fontSize: '1.5rem',
+            cursor: 'pointer', boxShadow: '0 4px 20px rgba(239,68,68,0.2)',
+            transition: 'all 0.18s', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>❌</button>
+          <button type="button" onClick={() => vote(5)} style={{
+            width: 56, height: 56, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.15)',
+            background: 'rgba(255,255,255,0.05)', color: 'rgba(136,136,160,0.8)', fontSize: '1.3rem',
+            cursor: 'pointer', transition: 'all 0.18s', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>😐</button>
+          <button type="button" onClick={() => vote(9)} style={{
+            width: 68, height: 68, borderRadius: '50%', border: '2px solid #10b981',
+            background: 'rgba(16,185,129,0.1)', color: '#10b981', fontSize: '1.5rem',
+            cursor: 'pointer', boxShadow: '0 4px 20px rgba(16,185,129,0.2)',
+            transition: 'all 0.18s', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>🔥</button>
         </div>
       </div>
       <div className="flex-wrap-center mt-16">
@@ -790,10 +863,17 @@ function RateFeed() {
         </span>
         {canShare() && <span className="text-success" style={{ fontSize: '0.7rem' }}>✓ Share</span>}
       </div>
-      <div className={cn('card card--pad', rated && 'alert--success')} style={{ textAlign: 'center', borderWidth: rated ? 2 : 1 }}>
-        <img src={entry.pfp_url} alt="" className="avatar avatar--xl" style={{ margin: '0 auto 16px' }} />
-        <h3 className="lb-name mb-0">{entry.username}</h3>
-        <p className="lb-region">{entry.region}</p>
+      <div style={{
+        textAlign: 'center', padding: 24, borderRadius: 20,
+        background: rated ? 'rgba(16,185,129,0.08)' : 'rgba(16,16,30,0.75)',
+        border: rated ? '2px solid rgba(16,185,129,0.35)' : '1px solid rgba(255,255,255,0.08)',
+        backdropFilter: 'blur(20px)',
+        boxShadow: rated ? '0 0 40px rgba(16,185,129,0.12)' : '0 8px 32px rgba(0,0,0,0.4)',
+        transition: 'all 0.3s',
+      }}>
+        <img src={entry.pfp_url} alt="" className="avatar avatar--xl" style={{ margin: '0 auto 16px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }} />
+        <h3 style={{ margin: '0 0 4px', fontFamily: "'Syne', system-ui, sans-serif", fontWeight: 700, fontSize: '1.1rem', letterSpacing: '-0.02em' }}>{entry.username}</h3>
+        <p style={{ margin: 0, fontSize: '0.8rem', color: 'rgba(136,136,160,0.8)' }}>{entry.region}</p>
         {rated ? (
           <div className="text-success" style={{ fontSize: '1.1rem', padding: 12 }}>✅ Rated!</div>
         ) : (
@@ -905,7 +985,7 @@ function Upload() {
       if (entryError) throw entryError
 
       await ensureAnonymousUser(getTotalVotesGiven(), finalRegion)
-      setMessage('✅ You are in this week\'s competition!')
+      setMessage("✅ You are in this week's competition!")
       window.dispatchEvent(new CustomEvent('entry_submitted'))
 
       setUsername(''); setImage(null); setPreview(null); setIgUrl('')
@@ -976,8 +1056,14 @@ function Upload() {
             {message}
           </p>
         )}
-        <button type="button" className="btn btn-primary w-full" onClick={handleUpload} disabled={loading}>
-          {loading ? 'Uploading…' : '🚀 Submit Entry'}
+        <button type="button" onClick={handleUpload} disabled={loading} style={{
+          width: '100%', padding: '14px', borderRadius: 12, border: 'none',
+          background: loading ? 'rgba(124,58,237,0.4)' : 'linear-gradient(135deg,#7c3aed,#6d28d9)',
+          color: '#fff', fontWeight: 700, fontSize: '1rem', cursor: loading ? 'not-allowed' : 'pointer',
+          boxShadow: loading ? 'none' : '0 4px 24px rgba(124,58,237,0.4)',
+          transition: 'all 0.2s', letterSpacing: '-0.01em',
+        }}>
+          {loading ? '⏳ Uploading…' : '🚀 Submit Entry'}
         </button>
       </div>
     </Page>
@@ -1055,10 +1141,23 @@ function ShareCard({ entry, rank, globalTopPercent, onClose }) {
           <div className="lb-meta">Week {getWeekNumber()} · {new Date().getFullYear()}</div>
           <div style={{ color: 'var(--accent-bright)', fontWeight: 600, fontSize: '0.8rem', marginTop: 8 }}>pfpbattle.vercel.app</div>
         </div>
-        <div className="modal-actions">
-          <button type="button" className="btn btn-primary" onClick={shareNative}>📤 Share</button>
-          <button type="button" className="btn btn-ghost" onClick={download}>📥 Save</button>
-          <button type="button" className="btn btn-ghost" onClick={onClose}>✕</button>
+        <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+          <button type="button" onClick={shareNative} style={{
+            flex: 1, padding: '12px', borderRadius: 12, border: 'none',
+            background: 'linear-gradient(135deg,#7c3aed,#6d28d9)', color: '#fff',
+            fontWeight: 600, fontSize: '0.88rem', cursor: 'pointer',
+            boxShadow: '0 4px 20px rgba(124,58,237,0.4)',
+          }}>📤 Share</button>
+          <button type="button" onClick={download} style={{
+            flex: 1, padding: '12px', borderRadius: 12,
+            border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.05)',
+            color: 'rgba(238,238,245,0.8)', fontWeight: 600, fontSize: '0.88rem', cursor: 'pointer',
+          }}>📥 Save</button>
+          <button type="button" onClick={onClose} style={{
+            width: 46, padding: '12px', borderRadius: 12,
+            border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.05)',
+            color: 'rgba(136,136,160,0.8)', fontWeight: 600, fontSize: '0.88rem', cursor: 'pointer',
+          }}>✕</button>
         </div>
       </div>
     </div>
@@ -1276,35 +1375,36 @@ function Profile() {
         </div>
         <span className="text-muted" style={{ fontSize: '0.75rem' }}>{Math.min(votesGiven, VOTES_REQUIRED_TO_SHARE)}/{VOTES_REQUIRED_TO_SHARE}</span>
       </div>
+
       {(() => {
-  const BOOST_TIERS = [
-    { min: 0,   max: 4,   label: 'Minimal', color: '#6b7280', pct: 10  },
-    { min: 5,   max: 14,  label: 'Low',     color: '#f59e0b', pct: 30  },
-    { min: 15,  max: 29,  label: 'Growing', color: '#f472b6', pct: 55  },
-    { min: 30,  max: 74,  label: 'Strong',  color: '#67e8f9', pct: 75  },
-    { min: 75,  max: 149, label: 'High',    color: '#a78bfa', pct: 90  },
-    { min: 150, max: Infinity, label: 'Max',color: '#22c55e', pct: 100 },
-  ]
-  const tier = BOOST_TIERS.find(t => totalVotesGiven >= t.min && totalVotesGiven <= t.max) || BOOST_TIERS[0]
-  const nextTier = BOOST_TIERS[BOOST_TIERS.indexOf(tier) + 1]
-  const isMax = !nextTier
-  return (
-    <div className="card card--pad" style={{ marginBottom: 20, border: `1px solid ${tier.color}44`, background: `${tier.color}0d` }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-        <p className="field-label mb-0">⚡ Feed Boost Meter</p>
-        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: tier.color, border: `1px solid ${tier.color}44`, borderRadius: 6, padding: '2px 8px' }}>
-          {tier.label}
-        </span>
-      </div>
-      <div className="progress-track" style={{ height: 10, marginBottom: 8 }}>
-        <div className="progress-fill" style={{ width: `${tier.pct}%`, background: `linear-gradient(90deg, ${tier.color}88, ${tier.color})`, borderRadius: 999 }} />
-      </div>
-      <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-dim)' }}>
-        {isMax ? '🚀 Your PFP is getting maximum feed exposure!' : `Rate more to boost visibility · ${nextTier.min - totalVotesGiven} more ratings to reach ${nextTier.label}`}
-      </p>
-    </div>
-  )
-})()}
+        const BOOST_TIERS = [
+          { min: 0,   max: 4,   label: 'Minimal', color: '#6b7280', pct: 10  },
+          { min: 5,   max: 14,  label: 'Low',     color: '#f59e0b', pct: 30  },
+          { min: 15,  max: 29,  label: 'Growing', color: '#f472b6', pct: 55  },
+          { min: 30,  max: 74,  label: 'Strong',  color: '#67e8f9', pct: 75  },
+          { min: 75,  max: 149, label: 'High',    color: '#a78bfa', pct: 90  },
+          { min: 150, max: Infinity, label: 'Max', color: '#22c55e', pct: 100 },
+        ]
+        const tier = BOOST_TIERS.find(t => totalVotesGiven >= t.min && totalVotesGiven <= t.max) || BOOST_TIERS[0]
+        const nextTier = BOOST_TIERS[BOOST_TIERS.indexOf(tier) + 1]
+        const isMax = !nextTier
+        return (
+          <div className="card card--pad" style={{ marginBottom: 20, border: `1px solid ${tier.color}44`, background: `${tier.color}0d` }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <p className="field-label mb-0">⚡ Feed Boost Meter</p>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: tier.color, border: `1px solid ${tier.color}44`, borderRadius: 6, padding: '2px 8px' }}>
+                {tier.label}
+              </span>
+            </div>
+            <div className="progress-track" style={{ height: 10, marginBottom: 8 }}>
+              <div className="progress-fill" style={{ width: `${tier.pct}%`, background: `linear-gradient(90deg, ${tier.color}88, ${tier.color})`, borderRadius: 999 }} />
+            </div>
+            <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-dim)' }}>
+              {isMax ? '🚀 Your PFP is getting maximum feed exposure!' : `Rate more to boost visibility · ${nextTier.min - totalVotesGiven} more ratings to reach ${nextTier.label}`}
+            </p>
+          </div>
+        )
+      })()}
 
       <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
         <input className="input" style={{ flex: 1 }} value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Enter username" onKeyDown={(e) => e.key === 'Enter' && search()} />
@@ -1329,22 +1429,40 @@ function Profile() {
       )}
       {stats && stats.totalWeeks > 0 && (
         <>
-          <div className="stat-grid">
-            {[['Weeks', stats.totalWeeks], ['Votes', stats.totalVotesReceived], ['Views', stats.totalViews || 0], ['Best', stats.bestScore], ['Rating', stats.bestRating + '/10']].map(([label, val]) => (
-              <div key={label} className="stat-card">
-                <div className="stat-value">{val}</div>
-                <div className="stat-label">{label}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
+            {[['Weeks', stats.totalWeeks], ['Votes', stats.totalVotesReceived], ['Views', stats.totalViews || 0], ['Best Score', stats.bestScore], ['Best Rating', stats.bestRating + '/10']].map(([label, val]) => (
+              <div key={label} style={{
+                padding: '16px 12px', textAlign: 'center',
+                borderRadius: 14, background: 'rgba(16,16,30,0.75)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                transition: 'transform 0.2s, border-color 0.2s',
+              }} className="stat-card">
+                <div style={{ fontFamily: "'Syne', system-ui, sans-serif", fontSize: '1.4rem', fontWeight: 700, color: '#a78bfa', letterSpacing: '-0.03em' }}>{val}</div>
+                <div style={{ fontSize: '0.7rem', color: 'rgba(136,136,160,0.8)', marginTop: 4, fontWeight: 500 }}>{label}</div>
               </div>
             ))}
           </div>
           <div className="card card--pad">
             <p className="field-label">Week history</p>
             {stats.weeks.map((w, i) => (
-              <div key={i} className="lb-row" style={{ padding: '12px 0', background: 'transparent', border: 'none', borderBottom: '1px solid var(--border)', borderRadius: 0, margin: 0 }}>
-                <span className="text-muted" style={{ fontSize: '0.85rem' }}>Week {w.week}, {w.year}</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span className="lb-score" style={{ fontSize: '0.85rem' }}>{w.score} · ⭐{w.avgRating}</span>
-                  <button type="button" className={cn('btn', canShare() ? 'btn-primary' : 'btn-ghost')} style={{ padding: '4px 12px', fontSize: '0.75rem' }} onClick={() => handleShare(w)}>
+              <div key={i} style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '12px 14px', borderRadius: 10, marginBottom: 6,
+                background: 'rgba(16,16,30,0.6)', border: '1px solid rgba(255,255,255,0.07)',
+                transition: 'border-color 0.2s',
+              }}>
+                <div>
+                  <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'rgba(238,238,245,0.9)' }}>Week {w.week}, {w.year}</div>
+                  <div style={{ fontSize: '0.72rem', color: 'rgba(136,136,160,0.7)', marginTop: 2 }}>⭐ {w.avgRating} · {w.totalVotes} votes</div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontFamily: "'Syne', system-ui, sans-serif", fontSize: '0.9rem', fontWeight: 700, color: '#a78bfa' }}>{w.score}</span>
+                  <button type="button" onClick={() => handleShare(w)} style={{
+                    padding: '6px 12px', borderRadius: 8, border: 'none', fontSize: '0.75rem', fontWeight: 600,
+                    background: canShare() ? 'linear-gradient(135deg,#7c3aed,#6d28d9)' : 'rgba(255,255,255,0.06)',
+                    color: canShare() ? '#fff' : 'rgba(136,136,160,0.7)',
+                    cursor: 'pointer', boxShadow: canShare() ? '0 2px 10px rgba(124,58,237,0.3)' : 'none',
+                  }}>
                     {canShare() ? '📤' : '🔒'}
                   </button>
                 </div>
