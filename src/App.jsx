@@ -15,6 +15,18 @@ import { castVote, syncWeekVotesForUser } from './votes'
 import { computeLifetimeStats } from './stats'
 import { buildTrending } from './trending'
 
+
+// ── Responsive sidebar CSS ───────────────────────────────────────
+const _style = document.createElement('style')
+_style.textContent = `
+  @media (max-width: 768px) {
+    .sidebar-nav { display: none !important; }
+    .mobile-bottom-nav { display: flex !important; }
+    .main-content { margin-left: 0 !important; padding-bottom: 70px; }
+  }
+`
+document.head.appendChild(_style)
+
 // ── Region auto-detect (IP-based, no permission prompt) ──────────
 const REGION_KEY = 'locked_region'
 
@@ -35,10 +47,10 @@ export const detectRegion = async () => {
 export const getLockedRegion = () => localStorage.getItem(REGION_KEY) || null
 
 const NAV = [
+  ['upload', '📤', 'Enter'],
   ['home', '🏆', 'Board'],
   ['swipe', '🎮', 'Swipe'],
   ['rate', '⭐', 'Rate'],
-  ['upload', '📤', 'Enter'],
   ['profile', '👤', 'Profile'],
 ]
 
@@ -48,7 +60,7 @@ const getWeekNumber = () => {
   return Math.ceil((((now - start) / 86400000) + start.getDay() + 1) / 7)
 }
 
-const VOTES_REQUIRED_TO_SHARE = 3
+const VOTES_REQUIRED_TO_SHARE = 5
 
 const getVotesGiven = () => parseInt(localStorage.getItem('votes_given') || '0')
 const addVoteGiven = () => localStorage.setItem('votes_given', getVotesGiven() + 1)
@@ -139,7 +151,7 @@ const trackView = async (entry) => {
   await supabase.rpc('increment_views', { entry_id: entry.id })
 }
 
-// ── Streak & Badge Bar ───────────────────────────────────────────
+// ── Streak & Badge Bar (sidebar compact version) ────────────────
 function StreakBadgeBar() {
   const total = getTotalVotesGiven()
   const streak = getStreak()
@@ -149,32 +161,29 @@ function StreakBadgeBar() {
   const progress = next ? ((total - badge.minVotes) / (next.minVotes - badge.minVotes)) * 100 : 100
 
   return (
-    <div className="stats-bar">
-      <div className="stats-item">
-        <span>{alive ? '🔥' : '💤'}</span>
-        <span className={cn('stats-label', alive ? 'stats-label--hot' : 'stats-label--dim')}>
+    <div style={{ borderTop: '1px solid var(--border, #222)', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {/* Streak */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingLeft: 8 }}>
+        <span style={{ fontSize: '1rem' }}>{alive ? '🔥' : '💤'}</span>
+        <span style={{ fontSize: '0.78rem', color: alive ? '#fb923c' : 'var(--text-dim, #888)', fontWeight: 600 }}>
           {streak} day streak
         </span>
-        {!alive && streak > 0 && <span className="progress-hint">— rate today!</span>}
       </div>
-      <div className="stats-divider" />
-      <div className="stats-item">
-        <span>{badge.emoji}</span>
-        <div>
-          <div className="stats-item" style={{ gap: 6 }}>
-            <span className="stats-label" style={{ color: badge.color }}>{badge.label} Rater</span>
-            <span className="progress-hint">{total} votes</span>
-          </div>
-          {next && (
-            <div className="stats-item" style={{ marginTop: 4, gap: 6 }}>
-              <div className="progress-track">
-                <div className="progress-fill" style={{ width: `${progress}%`, background: badge.color }} />
-              </div>
-              <span className="progress-hint">{next.emoji} {next.minVotes - total} to go</span>
-            </div>
-          )}
-          {!next && <span className="progress-hint" style={{ color: 'var(--accent-bright)' }}>Max level 👑</span>}
+      {/* Badge */}
+      <div style={{ paddingLeft: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+          <span style={{ fontSize: '1rem' }}>{badge.emoji}</span>
+          <span style={{ fontSize: '0.78rem', color: badge.color, fontWeight: 600 }}>{badge.label} Rater</span>
         </div>
+        {next && (
+          <div>
+            <div style={{ height: 4, borderRadius: 4, background: 'var(--border, #333)', overflow: 'hidden', marginBottom: 3 }}>
+              <div style={{ height: '100%', borderRadius: 4, background: badge.color, width: `${progress}%` }} />
+            </div>
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-dim, #888)' }}>{next.minVotes - total} to {next.label}</span>
+          </div>
+        )}
+        {!next && <span style={{ fontSize: '0.7rem', color: 'var(--accent-bright, #a78bfa)' }}>Max level 👑</span>}
       </div>
     </div>
   )
@@ -350,26 +359,88 @@ useEffect(() => {
   }
 
   return (
-    <div className="app-shell">
-      <div className="app-inner">
+    <div style={{ display: 'flex', minHeight: '100vh' }}>
+      {/* Left sidebar nav */}
+      <aside className="sidebar-nav" style={{
+        width: 200,
+        minHeight: '100vh',
+        background: 'var(--bg-card, #111)',
+        borderRight: '1px solid var(--border, #222)',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '1.25rem 0.75rem',
+        gap: 4,
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        zIndex: 100,
+      }}>
+        <div style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--accent-bright, #a78bfa)', marginBottom: '1.25rem', paddingLeft: 8 }}>
+          ⚔️ PFPBattle
+        </div>
+        {NAV.map(([id, icon, label]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setPage(id)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: '10px 12px',
+              borderRadius: 10,
+              border: 'none',
+              background: page === id ? 'var(--accent, #7c3aed)' : 'transparent',
+              color: page === id ? '#fff' : 'var(--text-dim, #888)',
+              fontWeight: page === id ? 700 : 500,
+              fontSize: '0.95rem',
+              cursor: 'pointer',
+              textAlign: 'left',
+              width: '100%',
+              transition: 'background 0.15s, color 0.15s',
+            }}
+          >
+            <span style={{ fontSize: '1.1rem' }}>{icon}</span>
+            {label}
+          </button>
+        ))}
+        <div style={{ marginTop: 'auto', paddingTop: 16 }}>
+          <StreakBadgeBar />
+        </div>
+      </aside>
+
+      {/* Mobile bottom nav */}
+      <nav style={{
+        display: 'none',
+        position: 'fixed',
+        bottom: 0, left: 0, right: 0,
+        background: 'var(--bg-card, #111)',
+        borderTop: '1px solid var(--border, #222)',
+        zIndex: 200,
+        padding: '6px 0 env(safe-area-inset-bottom, 6px)',
+      }} className="mobile-bottom-nav">
+        {NAV.map(([id, icon, label]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setPage(id)}
+            style={{
+              flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: page === id ? 'var(--accent-bright, #a78bfa)' : 'var(--text-dim, #888)',
+              fontSize: '0.6rem', fontWeight: page === id ? 700 : 500, padding: '4px 0',
+            }}
+          >
+            <span style={{ fontSize: '1.3rem' }}>{icon}</span>
+            {label}
+          </button>
+        ))}
+      </nav>
+
+      {/* Main content */}
+      <div style={{ marginLeft: 200, flex: 1, minWidth: 0 }} className="main-content">
         {levelUpBadge && <LevelUpToast badge={levelUpBadge} onClose={() => setLevelUpBadge(null)} />}
         {showSubmitToast && <SubmitToast onClose={() => setShowSubmitToast(false)} />}
-        <header className="header">
-          <h1 className="header-brand">⚔️ PFPBattle</h1>
-          <nav className="nav">
-            {NAV.map(([id, icon, label]) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setPage(id)}
-                className={cn('nav-btn', page === id && 'nav-btn--active')}
-              >
-                {icon} {label}
-              </button>
-            ))}
-          </nav>
-        </header>
-        <StreakBadgeBar />
         <div key={page}>
           {page === 'home' && <Leaderboard setPage={setPage} />}
           {page === 'swipe' && <SwipeMode />}
