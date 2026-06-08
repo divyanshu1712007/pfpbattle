@@ -1,5 +1,6 @@
 /** Ratings a user must give before their entry can compete on the leaderboard. */
-export const LEADERBOARD_MIN_RATINGS_GIVEN = 20
+export const LEADERBOARD_MIN_RATINGS_GIVEN = 5
+/** Ranked leaderboard pool: owners who gave 5+ ratings. */
 
 export const calcScore = (avgRating, totalVotes) => {
   if (!totalVotes || totalVotes === 0) return 0
